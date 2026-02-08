@@ -1,0 +1,7 @@
+namespace WRM.Interface;
+
+public interface IPlugin
+{
+    string Name { get; }
+    void Register(IPluginHost host);
+}

@@ -1,0 +1,13 @@
+<Solution>
+  <Project Path="WRM.Core/WRM.Core.csproj" />
+  <Project Path="WRM.HTTP.HTTP1/WRM.HTTP.HTTP1.csproj" />
+  <Project Path="WRM.HTTP.HTTP2/WRM.HTTP.HTTP2.csproj" />
+  <Project Path="WRM.HTTP.ProtocolDetection/WRM.HTTP.ProtocolDetection.csproj" />
+  <Project Path="WRM.HTTP/WRM.HTTP.csproj" />
+  <Project Path="WRM.Interface/WRM.Interface.csproj" />
+  <Project Path="WRM.SSL/WRM.SSL.csproj" />
+  <Project Path="WRM.Tcp/WRM.Tcp.csproj" />
+  <Project Path="WRM.Test/WRM.Test.csproj" />
+  <Project Path="WRM.Tools/WRM.Tools.csproj" />
+  <Project Path="WRM.Wrapps\WRM.Wrapps.csproj" />
+</Solution>

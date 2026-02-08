@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\WRM.Interface\WRM.Interface.csproj" />
+      <ProjectReference Include="..\WRM.Tools\WRM.Tools.csproj" />
+      <ProjectReference Include="..\WRM.Wrapps\WRM.Wrapps.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\WRM.Core\WRM.Core.csproj" />
+      <ProjectReference Include="..\WRM.HTTP.HTTP1\WRM.HTTP.HTTP1.csproj" />
+      <ProjectReference Include="..\WRM.HTTP.HTTP2\WRM.HTTP.HTTP2.csproj" />
+      <ProjectReference Include="..\WRM.HTTP.ProtocolDetection\WRM.HTTP.ProtocolDetection.csproj" />
+      <ProjectReference Include="..\WRM.HTTP\WRM.HTTP.csproj" />
+      <ProjectReference Include="..\WRM.SSL\WRM.SSL.csproj" />
+      <ProjectReference Include="..\WRM.Tcp\WRM.Tcp.csproj" />
+    </ItemGroup>
+
+</Project>
