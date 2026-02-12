@@ -21,36 +21,33 @@ public class TestStep : IPluginStep
 {
     public async Task InvokeAsync(WRMContext context, Func<WRMContext, Task> next)
     {
-        if (context.Items.TryGetValue(Names.TcpStream, out var objectStream) && objectStream is Stream stream)
+        if (context.Items.TryGetValue(Names.HttpContext, out var objectHttpContext) && objectHttpContext is HttpContext httpContext)
         {
-            if (context.Items.TryGetValue(Names.HttpContext, out var objectHttpContext) && objectHttpContext is HttpContext httpContext)
+            if (httpContext.Request.Method.StartsWith("Connect", StringComparison.OrdinalIgnoreCase))
             {
-                if (httpContext.Request.Method.StartsWith("Connect", StringComparison.OrdinalIgnoreCase))
-                {
-                    var target = httpContext.Request.Path; // host:port
-                    var parts = target.Split(':', 2);
-                    if (parts.Length != 2) return;
-                    var host = parts[0];
-                    var port = int.Parse(parts[1]);
-                    var remote = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                    await remote.ConnectAsync(host, port);
-                    await httpContext.MakeTunel(new HttpResponse() { ReasonPhrase = "Connection Established" }, out var read, out Stream write);
-                    var server = new NetworkStream(remote, ownsSocket: true);
-                    var t1 = PipeAsync(read, server, context.CancellationToken);
-                    var t2 = PipeAsync(server, write, context.CancellationToken);
-                    context.Loger?.LogInfo(this, httpContext.Request.Method);
-                    await Task.WhenAny(t1, t2);
-                }
-                else
-                {
-                    context.Loger?.LogInfo(this, "Find Http Context ");
-                    await httpContext.WriteResponse(new HttpResponse() { StatusCode = 200, ReasonPhrase = "Ok" }, new MemoryStream(Encoding.ASCII.GetBytes(
-                        $"""
-                         {httpContext.Request.IsSsl}
-                         {httpContext.Request.Method} {httpContext.Request.Path} {httpContext.Request.Version}
-                         {string.Join("\n", httpContext.Request.Headers)}   
-                         """)));
-                }
+                var target = httpContext.Request.Path; // host:port
+                var parts = target.Split(':', 2);
+                if (parts.Length != 2) return;
+                var host = parts[0];
+                var port = int.Parse(parts[1]);
+                var remote = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                await remote.ConnectAsync(host, port);
+                await httpContext.MakeTunel(new HttpResponse() { ReasonPhrase = "Connection Established" }, out var read, out var write);
+                var server = new NetworkStream(remote, ownsSocket: true);
+                var t1 = PipeAsync(read, server, context.CancellationToken);
+                var t2 = PipeAsync(server, write, context.CancellationToken);
+                context.Loger?.LogInfo(this, httpContext.Request.Method);
+                await Task.WhenAny(t1, t2);
+            }
+            else
+            {
+                context.Loger?.LogInfo(this, "Find Http Context ");
+                await httpContext.WriteResponse(new HttpResponse() { StatusCode = 200, ReasonPhrase = "Ok" }, new MemoryStream(Encoding.ASCII.GetBytes(
+                    $"""
+                     {httpContext.Request.IsSsl}
+                     {httpContext.Request.Method} {httpContext.Request.Path} {httpContext.Request.Version}
+                     {string.Join("\n", httpContext.Request.Headers)}   
+                     """)));
             }
         }
 

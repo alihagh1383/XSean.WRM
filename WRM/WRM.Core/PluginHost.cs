@@ -6,16 +6,19 @@ public class PluginHost
 {
     private readonly List<IPluginStep> _steps = [];
 
-    public void RegesterStep<T>(Func<T> createFunc) where T : IPluginStep
+    public void RegesterStep(params List<Func<IPluginStep>> createFuncs)
     {
-        _steps.Add(createFunc.Invoke());
+        foreach (var step in createFuncs.Select(createFunc => createFunc.Invoke()))
+            _steps.Add(step);
     }
 
-    public void RegesterPlugin<T>(Func<T> createFunc) where T : IPlugin
+    public void RegesterPlugin(params List<Func<IPlugin>> createFuncs)
     {
-        IPlugin plugin = createFunc.Invoke();
-        Console.WriteLine($"[Register Plugin] {plugin.Name}");
-        plugin.RegesterSteps(this);
+        foreach (var plugin in createFuncs.Select(createFunc => createFunc.Invoke()))
+        {
+            Console.WriteLine($"[Register Plugin] {plugin.Name}");
+            plugin.RegesterSteps(this);
+        }
     }
 
     public Func<WRMContext, Task> Build() =>

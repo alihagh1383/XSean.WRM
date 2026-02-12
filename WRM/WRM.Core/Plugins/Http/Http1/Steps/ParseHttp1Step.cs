@@ -75,7 +75,13 @@ public class ParseHttp1Step : IPluginStep
 
             request.Body = new HttpRequestBodyStream(stream, request.Headers.ContentLength, request.Headers.TransferEncoding);
 
-            var httpContext = new Http1Context(keepAlive, DefaultKeepAliveTimeout) { Connection = stream, Request = request };
+            var httpContext = new Http1Context(keepAlive, DefaultKeepAliveTimeout)
+            {
+                Connection = stream, 
+                Request = request,
+                CancellationToken = context.CancellationToken,
+                Loger = context.Loger
+            };
             requestCount++;
 
             var connectionHeader = httpContext.Request.Headers.Connection;
@@ -92,6 +98,5 @@ public class ParseHttp1Step : IPluginStep
 
             await httpContext.Request.Body.DisposeAsync();
         }
-        
     }
 }

@@ -5,6 +5,7 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using WRM.Core;
 using WRM.Core.Plugins.Http.Http1;
+using WRM.Core.Plugins.Http.HttpPipline;
 using WRM.Core.Plugins.ProtocolDetection;
 using WRM.Core.Plugins.Tcp;
 using WRM.Core.Plugins.TcpToSSL;
@@ -27,18 +28,20 @@ logger = new Logger();
 port = 8080;
 ip = IPAddress.Any;
 host = new PluginHost();
-host.RegesterPlugin(() => new TcpPlugin());
-host.RegesterPlugin(() => new MoveTcpToSSLPlugin(new SslServerAuthenticationOptions()
-{
-    ServerCertificate = CreateSelfSignedCertificate(),
-    ClientCertificateRequired = false,
-    EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13,
-    CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
-    ApplicationProtocols = [ /*SslApplicationProtocol.Http2,*/ SslApplicationProtocol.Http11]
-}));
-host.RegesterPlugin(() => new ProtocolDetectionPlugin());
-host.RegesterPlugin(() => new Http1Plugin());
-host.RegesterPlugin(() => new TestPlugin());
+host.RegesterPlugin(
+    () => new TcpPlugin(),
+    () => new MoveTcpToSSLPlugin(new SslServerAuthenticationOptions()
+    {
+        ServerCertificate = CreateSelfSignedCertificate(),
+        ClientCertificateRequired = false,
+        EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13,
+        CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
+        ApplicationProtocols = [ /*SslApplicationProtocol.Http2,*/ SslApplicationProtocol.Http11]
+    }),
+    () => new ProtocolDetectionPlugin(),
+    () => new Http1Plugin(),
+    () => new HttpPiplinePlugin(() => new TestMiddleware())
+);
 
 engine = new WRMEngine(host, logger);
 
@@ -66,7 +69,7 @@ try
 {
     while (!cts.Token.IsCancellationRequested)
     {
-        Socket? client = null;
+        Socket? client;
         try
         {
             await connectionLimiter.WaitAsync(cts.Token);
