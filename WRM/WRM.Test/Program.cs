@@ -3,9 +3,15 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Text.RegularExpressions;
 using WRM.Core;
+using WRM.Core.Plugins.Http.Abstraction;
 using WRM.Core.Plugins.Http.Http1;
 using WRM.Core.Plugins.Http.HttpPipline;
+using WRM.Core.Plugins.Http.HttpPipline.Middlewares.QueryParams;
+using WRM.Core.Plugins.Http.HttpPipline.Middlewares.Routing;
+using WRM.Core.Plugins.Http.HttpPipline.Middlewares.Routing.Abstraction;
 using WRM.Core.Plugins.ProtocolDetection;
 using WRM.Core.Plugins.Tcp;
 using WRM.Core.Plugins.TcpToSSL;
@@ -22,27 +28,47 @@ IPAddress ip;
 Logger logger;
 CancellationTokenSource cts;
 SemaphoreSlim connectionLimiter;
+HttpEndpoints endpoints;
 /* init */
 cts = new CancellationTokenSource();
 logger = new Logger();
 port = 8080;
 ip = IPAddress.Any;
 host = new PluginHost();
-host.RegesterPlugin(
+endpoints = new HttpEndpoints();
+
+endpoints.Map(RootEndPoint(), ["get"], context => context.WriteResponse(new HttpResponse(), new MemoryStream(Encoding.ASCII.GetBytes(
+    $"""
+     {context.Request.Method} {context.Request.Path} {context.Request.Version}
+     {string.Join("\n", context.Request.Headers)}   
+     """))));
+
+endpoints.Map(TestEndPoint(), ["get"], context => context.WriteResponse(new HttpResponse(), new MemoryStream(Encoding.ASCII.GetBytes(
+    $"""
+     {context.Request.Path}
+     {string.Join(";", context.Request.RouteVars.Select(pair => $"[{pair.Key}, {string.Join(',', pair.Value)}]"))}
+     {string.Join(";", context.Request.QueryVars.Select(pair => $"[{pair.Key}, {string.Join(',', pair.Value)}]"))}
+     {string.Join("\n", context.Request.Headers)} 
+     """))));
+
+host.RegesterPlugin([
     () => new TcpPlugin(),
     () => new MoveTcpToSSLPlugin(new SslServerAuthenticationOptions()
     {
         ServerCertificate = CreateSelfSignedCertificate(),
         ClientCertificateRequired = false,
-        EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13,
+        EnabledSslProtocols = SslProtocols.None | SslProtocols.Tls12 | SslProtocols.Tls13,
         CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
-        ApplicationProtocols = [ /*SslApplicationProtocol.Http2,*/ SslApplicationProtocol.Http11]
+        ApplicationProtocols = [SslApplicationProtocol.Http11]
     }),
     () => new ProtocolDetectionPlugin(),
     () => new Http1Plugin(),
-    () => new HttpPiplinePlugin(() => new TestMiddleware())
-);
-
+    () => new HttpPiplinePlugin([
+        () => new QueryParamsMiddleware(),
+        () => new RoutingMiddleware(endpoints),
+        () => new TestMiddleware()
+    ])
+]);
 engine = new WRMEngine(host, logger);
 
 connectionLimiter = new SemaphoreSlim(maxConcurrentConnections, maxConcurrentConnections);
@@ -142,4 +168,13 @@ static X509Certificate2 CreateSelfSignedCertificate()
         Console.WriteLine($"⚠️  Could not save certificate: {ex.Message}");
         return certificate;
     }
+}
+
+internal partial class Program
+{
+    [GeneratedRegex("^/$")]
+    private static partial Regex RootEndPoint();
+
+    [GeneratedRegex("^/(?<Name>.+)$")]
+    private static partial Regex TestEndPoint();
 }

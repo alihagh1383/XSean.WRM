@@ -17,4 +17,8 @@ public class HttpRequest
 
     /* Body */
     public Stream Body { get; set; } = Stream.Null;
+
+    /* Routing */
+    public Dictionary<string, IEnumerable<string>> QueryVars = new();
+    public Dictionary<string, IEnumerable<string>> RouteVars = new();
 }
